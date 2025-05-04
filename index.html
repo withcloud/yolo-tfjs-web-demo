@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TensorFlow.js Pose Detection Models</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .model-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .model-card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .model-card h2 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        .model-card p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .yolo {
+            background-color: #9b59b6;
+        }
+        
+        .yolo:hover {
+            background-color: #8e44ad;
+        }
+        
+        .gde {
+            background-color: #2ecc71;
+        }
+        
+        .gde:hover {
+            background-color: #27ae60;
+        }
+        
+        .compare {
+            background-color: #e74c3c;
+        }
+        
+        .compare:hover {
+            background-color: #c0392b;
+        }
+        
+        .compare-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(145deg, #ffebe9, #fadbd9);
+            margin-bottom: 20px;
+        }
+        
+        .compare-card h2 {
+            color: #c0392b;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TensorFlow.js 姿勢檢測模型展示</h1>
+        
+        <div class="model-list">
+            <div class="model-card compare-card">
+                <h2>模型比較頁面</h2>
+                <p>比較不同模型的效果與性能，在同一畫面中觀察 YOLOv11n Pose、YOLOv11n Pose Custom 640 與 GDE Pose 640 三個模型的檢測結果與處理時間。</p>
+                <a href="/compare-models" class="btn compare">開啟比較頁面</a>
+            </div>
+            
+            <div class="model-card">
+                <h2>GDE Pose 640</h2>
+                <p>GDE Pose 模型的 640x640 輕量級人體姿勢檢測模型，適用於一般用途。 (coco-pose)</p>
+                <a href="/gde-pose-640" class="btn gde">開啟演示</a>
+            </div>
+            
+            <div class="model-card">
+                <h2>GDE Pose 1280</h2>
+                <p>GDE Pose 模型的 1280x1280 高精度人體姿勢檢測模型，適用於需要更高精度的情境。</p>
+                <a href="/gde-pose-1280" class="btn gde">開啟演示</a>
+            </div>
+            
+            <div class="model-card">
+                <h2>GDE Yoga 640</h2>
+                <p>GDE Yoga 模型的 640x640 輕量級人體姿勢檢測模型，僅適用於瑜伽動作識別。 (yoga82)</p>
+                <a href="/gde-yoga-640" class="btn gde">開啟演示</a>
+            </div>
+            
+            <div class="model-card">
+                <h2>YOLOv11n Pose</h2>
+                <p>基於 YOLOv11-nano 的通用人體姿勢檢測模型，提供出色的速度與精度平衡。</p>
+                <a href="/yolo11n-pose" class="btn yolo">開啟演示</a>
+            </div>
+            
+            <div class="model-card">
+                <h2>YOLOv11n Pose Custom 640</h2>
+                <p>自訂 640x640 YOLOv11n 姿勢檢測模型，針對特定場景優化。</p>
+                <a href="/yolo11n-pose-custom-640" class="btn yolo">開啟演示</a>
+            </div>
+            
+            <div class="model-card">
+                <h2>YOLOv11n Pose Custom 1280</h2>
+                <p>高解析度 1280x1280 自訂 YOLOv11n 姿勢檢測模型，提供更高的精確度。</p>
+                <a href="/yolo11n-pose-custom-1280" class="btn yolo">開啟演示</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型比較 - TensorFlow.js Pose Detection</title>
+    <link rel="stylesheet" href="../style.css">
+    <!-- Import TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
+    <!-- Import tfjs-backend-webgl for GPU support -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <style>
+        .canvas-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .canvas-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .image-container {
+            text-align: center;
+            padding: 10px;
+            margin: 5px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .image-container h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .image-container canvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        
+        .model-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .time-info {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .container {
+            max-width: 1200px;
+        }
+        
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 10;
+        }
+        
+        .model-loading {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .model-loading {
+                flex-direction: column;
+            }
+            
+            .model-loading-item {
+                margin-bottom: 15px;
+            }
+        }
+        
+        .model-loading-item {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .model-progress {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.3s;
+        }
+        
+        .yolo-bar {
+            background-color: #9b59b6;
+        }
+        
+        .yolo-custom-bar {
+            background-color: #8e44ad;
+        }
+        
+        .gde-bar {
+            background-color: #2ecc71;
+        }
+        
+        #loadSection {
+            margin-bottom: 20px;
+        }
+        
+        #inputSection {
+            display: none;
+            text-align: center;
+            margin: 30px auto;
+            max-width: 600px;
+        }
+        
+        .input-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .separator {
+            height: 1px;
+            background-color: #ddd;
+            margin: 20px 0;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .back-button:hover {
+            background-color: #2980b9;
+        }
+        
+        /* 上傳按鈕樣式 */
+        .upload-label {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .upload-label:hover {
+            background-color: #45a049;
+        }
+        
+        /* 或字樣 */
+        .or-divider {
+            font-weight: bold;
+            color: #7f8c8d;
+            font-size: 16px;
+            margin: 0 15px;
+        }
+        
+        /* 使用相機按鈕 */
+        #captureBtn {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        #captureBtn:hover {
+            background-color: #2980b9;
+        }
+        
+        /* 修正相機模態框樣式 */
+        .camera-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .camera-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .close-camera {
+            align-self: flex-end;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close-camera:hover {
+            color: #333;
+        }
+        
+        #video {
+            width: 100%;
+            max-height: 70vh;
+            margin: 15px 0;
+            border-radius: 5px;
+            background-color: #000;
+        }
+        
+        #takePictureBtn {
+            margin-top: 10px;
+            background-color: #e74c3c;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        #takePictureBtn:hover {
+            background-color: #c0392b;
+        }
+        
+        /* 標題樣式 */
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← 返回主頁</a>
+        <h1>姿勢檢測模型比較</h1>
+        
+        <div id="loadSection">
+            <h3>載入模型中，請稍候...</h3>
+            
+            <div class="model-loading">
+                <div class="model-loading-item">
+                    <div>YOLOv11n Pose</div>
+                    <div class="model-progress">
+                        <div class="progress-bar yolo-bar" id="yoloProgress"></div>
+                    </div>
+                    <div id="yoloStatus">準備中...</div>
+                </div>
+                
+                <div class="model-loading-item">
+                    <div>YOLOv11n Custom 640</div>
+                    <div class="model-progress">
+                        <div class="progress-bar yolo-custom-bar" id="yoloCustomProgress"></div>
+                    </div>
+                    <div id="yoloCustomStatus">準備中...</div>
+                </div>
+                
+                <div class="model-loading-item">
+                    <div>GDE Pose 640</div>
+                    <div class="model-progress">
+                        <div class="progress-bar gde-bar" id="gdeProgress"></div>
+                    </div>
+                    <div id="gdeStatus">準備中...</div>
+                </div>
+            </div>
+            
+            <div id="overallStatus">等待所有模型載入完成...</div>
+        </div>
+        
+        <div id="inputSection">
+            <div class="input-controls">
+                <label for="imageUpload" class="upload-label">選擇圖片</label>
+                <input type="file" id="imageUpload" accept="image/*" style="display: none;" />
+                
+                <div class="or-divider">或</div>
+                
+                <button id="captureBtn">使用相機</button>
+            </div>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="canvas-comparison">
+            <div class="image-container">
+                <h3>原始圖像</h3>
+                <canvas id="originalCanvas"></canvas>
+                <div class="model-info">
+                    <span>輸入圖像</span>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <h3>YOLOv11n Pose</h3>
+                <canvas id="yoloCanvas"></canvas>
+                <div class="loading-indicator" id="yoloLoading">處理中...</div>
+                <div class="model-info">
+                    <span>17個關鍵點</span>
+                    <span class="time-info" id="yoloTime">-</span>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <h3>YOLOv11n Pose Custom 640</h3>
+                <canvas id="yoloCustomCanvas"></canvas>
+                <div class="loading-indicator" id="yoloCustomLoading">處理中...</div>
+                <div class="model-info">
+                    <span>17個關鍵點 (自訂優化)</span>
+                    <span class="time-info" id="yoloCustomTime">-</span>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <h3>GDE Pose 640</h3>
+                <canvas id="gdeCanvas"></canvas>
+                <div class="loading-indicator" id="gdeLoading">處理中...</div>
+                <div class="model-info">
+                    <span>17個關鍵點 (GDE版)</span>
+                    <span class="time-info" id="gdeTime">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="status">請在模型載入完成後選擇圖片</div>
+    </div>
+    
+    <div class="camera-modal" id="cameraModal">
+        <div class="camera-content">
+            <span class="close-camera">&times;</span>
+            <video id="video" autoplay playsinline></video>
+            <button id="takePictureBtn" class="btn">拍照</button>
+        </div>
+    </div>
+    
+    <script src="/compare-models/app.js"></script>
+</body>
+</html> 
