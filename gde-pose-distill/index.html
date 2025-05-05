@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDE Pose Detection (Distill) with TensorFlow.js</title>
+    <link rel="stylesheet" href="../style.css">
+    <!-- Import TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
+    <!-- Import tfjs-backend-webgl for GPU support -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <style>
+        /* 內聯樣式確保畫布顯示正確 */
+        #outputCanvas {
+            border: 3px solid red !important;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        
+        #inputCanvas {
+            border: 1px solid blue;
+        }
+        
+        .image-container {
+            text-align: center;
+            padding: 10px;
+            margin: 10px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .image-container h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GDE 姿勢檢測 (Distill)</h1>
+        
+        <div class="loading-section" id="loadingSection">
+            <h3>模型載入中...</h3>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-value" id="progressValue">0%</div>
+                </div>
+            </div>
+            <div id="loadingStatus">準備中...</div>
+        </div>
+        
+        <div class="input-section" id="inputSection" style="display: none;">
+            <div class="upload-container">
+                <label for="imageUpload" class="upload-label">選擇圖片</label>
+                <input type="file" id="imageUpload" accept="image/*" />
+            </div>
+            <div class="or-divider">或</div>
+            <button id="captureBtn" class="btn">使用相機 (拍照)</button>
+            <div class="or-divider">或</div>
+            <button id="realtimeBtn" class="btn">使用相機 (實時)</button>
+        </div>
+        
+        <div class="canvas-container">
+            <div class="input-output">
+                <div class="image-container">
+                    <h3>輸入圖片</h3>
+                    <canvas id="inputCanvas"></canvas>
+                </div>
+                <div class="image-container">
+                    <h3>檢測結果</h3>
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div id="fps-display" style="display: none;">FPS: <span id="fps">0</span></div>
+        <div id="status">準備中...</div>
+        <div id="info"></div>
+        
+        <div class="camera-modal" id="cameraModal">
+            <div class="camera-content">
+                <span class="close-camera">&times;</span>
+                <video id="video" autoplay playsinline></video>
+                <button id="takePictureBtn" class="btn">拍照</button>
+            </div>
+        </div>
+        
+        <div class="realtime-controls" id="realtimeControls" style="display: none;">
+            <button id="stopRealtimeBtn" class="btn btn-danger">停止實時檢測</button>
+        </div>
+    </div>
+    
+    <!-- 添加調試信息區域 -->
+    <div id="debug-info" style="margin: 20px; padding: 10px; border: 1px solid #ccc; background: #f0f0f0; display: none;">
+        <h3>畫布調試信息</h3>
+        <pre id="debug-content"></pre>
+    </div>
+    
+    <script>
+        // 在腳本加載前進行調試
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 已加載，檢查畫布元素');
+            
+            const inputCanvas = document.getElementById('inputCanvas');
+            const outputCanvas = document.getElementById('outputCanvas');
+            
+            if (inputCanvas) {
+                console.log('找到輸入畫布:', inputCanvas.width, 'x', inputCanvas.height);
+            } else {
+                console.error('未找到輸入畫布!');
+            }
+            
+            if (outputCanvas) {
+                console.log('找到輸出畫布:', outputCanvas.width, 'x', outputCanvas.height);
+                
+                // 測試輸出畫布是否可繪製
+                const ctx = outputCanvas.getContext('2d');
+                ctx.fillStyle = 'red';
+                ctx.fillRect(0, 0, 50, 50);
+                console.log('已在輸出畫布上繪製測試矩形');
+            } else {
+                console.error('未找到輸出畫布!');
+            }
+        });
+    </script>
+    
+    <script src="/gde-pose-distill/app.js"></script>
+</body>
+</html> 

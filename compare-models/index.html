@@ -317,6 +317,14 @@
                     </div>
                     <div id="gdeStatus">準備中...</div>
                 </div>
+                
+                <div class="model-loading-item">
+                    <div>GDE Pose Distill</div>
+                    <div class="model-progress">
+                        <div class="progress-bar gde-bar" id="gdeDistillProgress"></div>
+                    </div>
+                    <div id="gdeDistillStatus">準備中...</div>
+                </div>
             </div>
             
             <div id="overallStatus">等待所有模型載入完成...</div>
@@ -371,6 +379,16 @@
                 <div class="model-info">
                     <span>17個關鍵點 (GDE版)</span>
                     <span class="time-info" id="gdeTime">-</span>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <h3>GDE Pose Distill</h3>
+                <canvas id="gdeDistillCanvas"></canvas>
+                <div class="loading-indicator" id="gdeDistillLoading">處理中...</div>
+                <div class="model-info">
+                    <span>17個關鍵點 (蒸餾版)</span>
+                    <span class="time-info" id="gdeDistillTime">-</span>
                 </div>
             </div>
         </div>

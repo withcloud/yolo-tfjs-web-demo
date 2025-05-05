@@ -9,6 +9,7 @@ const originalCanvas = document.getElementById('originalCanvas');
 const yoloCanvas = document.getElementById('yoloCanvas');
 const yoloCustomCanvas = document.getElementById('yoloCustomCanvas');
 const gdeCanvas = document.getElementById('gdeCanvas');
+const gdeDistillCanvas = document.getElementById('gdeDistillCanvas');
 const statusDiv = document.getElementById('status');
 
 // Loading UI elements
@@ -17,26 +18,31 @@ const inputSection = document.getElementById('inputSection');
 const yoloProgress = document.getElementById('yoloProgress');
 const yoloCustomProgress = document.getElementById('yoloCustomProgress');
 const gdeProgress = document.getElementById('gdeProgress');
+const gdeDistillProgress = document.getElementById('gdeDistillProgress');
 const yoloStatus = document.getElementById('yoloStatus');
 const yoloCustomStatus = document.getElementById('yoloCustomStatus');
 const gdeStatus = document.getElementById('gdeStatus');
+const gdeDistillStatus = document.getElementById('gdeDistillStatus');
 const overallStatus = document.getElementById('overallStatus');
 
 // Detection loading UI elements
 const yoloLoading = document.getElementById('yoloLoading');
 const yoloCustomLoading = document.getElementById('yoloCustomLoading');
 const gdeLoading = document.getElementById('gdeLoading');
+const gdeDistillLoading = document.getElementById('gdeDistillLoading');
 
 // Performance info elements
 const yoloTime = document.getElementById('yoloTime');
 const yoloCustomTime = document.getElementById('yoloCustomTime');
 const gdeTime = document.getElementById('gdeTime');
+const gdeDistillTime = document.getElementById('gdeDistillTime');
 
 // Canvas contexts
 const originalCtx = originalCanvas.getContext('2d');
 const yoloCtx = yoloCanvas.getContext('2d');
 const yoloCustomCtx = yoloCustomCanvas.getContext('2d');
 const gdeCtx = gdeCanvas.getContext('2d');
+const gdeDistillCtx = gdeDistillCanvas.getContext('2d');
 
 // Default canvas size
 const defaultWidth = 640;
@@ -49,11 +55,14 @@ yoloCustomCanvas.width = defaultWidth;
 yoloCustomCanvas.height = defaultHeight;
 gdeCanvas.width = defaultWidth;
 gdeCanvas.height = defaultHeight;
+gdeDistillCanvas.width = defaultWidth;
+gdeDistillCanvas.height = defaultHeight;
 
 // Model variables
 let yoloModel = null;
 let yoloCustomModel = null;
 let gdeModel = null;
+let gdeDistillModel = null;
 let modelsLoaded = false;
 let inputImageData = null;
 let imageInfo = null;
@@ -132,6 +141,7 @@ async function init() {
         await loadYoloModel();
         await loadYoloCustomModel();
         await loadGdeModel();
+        await loadGdeDistillModel();
         
         modelsLoaded = true;
         overallStatus.textContent = '所有模型已加載完成，準備就緒！';
@@ -235,6 +245,35 @@ async function loadGdeModel() {
     }
 }
 
+// Load GDE Distill model
+async function loadGdeDistillModel() {
+    gdeDistillStatus.textContent = '正在載入中...';
+    
+    try {
+        // Load the model
+        gdeDistillModel = await tf.loadGraphModel('../models/gde-pose-distill/model.json', {
+            onProgress: (fraction) => {
+                gdeDistillProgress.style.width = `${Math.round(fraction * 100)}%`;
+                gdeDistillStatus.textContent = `載入中... ${Math.round(fraction * 100)}%`;
+            }
+        });
+        
+        // Warm up the model
+        const dummyInput = tf.zeros([1, 640, 640, 3]);
+        await gdeDistillModel.predict(dummyInput).array();
+        dummyInput.dispose();
+        
+        gdeDistillProgress.style.width = '100%';
+        gdeDistillStatus.textContent = '已加載完成';
+        console.log('GDE Distill模型已加載');
+        return true;
+    } catch (error) {
+        console.error('載入GDE Distill模型錯誤：', error);
+        gdeDistillStatus.textContent = '載入失敗：' + error.message;
+        return false;
+    }
+}
+
 // Update status message
 function updateStatus(message) {
     statusDiv.textContent = message;
@@ -282,16 +321,19 @@ async function processImage(img) {
         yoloCtx.clearRect(0, 0, yoloCanvas.width, yoloCanvas.height);
         yoloCustomCtx.clearRect(0, 0, yoloCustomCanvas.width, yoloCustomCanvas.height);
         gdeCtx.clearRect(0, 0, gdeCanvas.width, gdeCanvas.height);
+        gdeDistillCtx.clearRect(0, 0, gdeDistillCanvas.width, gdeDistillCanvas.height);
         
         // Reset timing info
         yoloTime.textContent = '-';
         yoloCustomTime.textContent = '-';
         gdeTime.textContent = '-';
+        gdeDistillTime.textContent = '-';
         
         // Run predictions sequentially for each model
         await runYoloPrediction();
         await runYoloCustomPrediction();
         await runGdePrediction();
+        await runGdeDistillPrediction();
         
         updateStatus('所有模型處理完成！');
     } catch (error) {
@@ -450,6 +492,57 @@ async function runGdePrediction() {
     } finally {
         // Hide loading indicator
         gdeLoading.style.display = 'none';
+    }
+}
+
+// GDE Distill Prediction
+async function runGdeDistillPrediction() {
+    if (!gdeDistillModel || !inputImageData) return;
+    
+    // Show loading indicator
+    gdeDistillLoading.style.display = 'block';
+    gdeDistillTime.textContent = '計算中...';
+    
+    try {
+        // Copy the original image to GDE Distill canvas
+        gdeDistillCtx.clearRect(0, 0, gdeDistillCanvas.width, gdeDistillCanvas.height);
+        gdeDistillCtx.drawImage(inputImageData, 0, 0);
+        
+        // 測量開始時間
+        const startTime = performance.now();
+        
+        // Convert image to tensor
+        const imageTensor = tf.tidy(() => {
+            const img = tf.browser.fromPixels(inputImageData);
+            const normalized = img.div(255.0);
+            return normalized.expandDims(0);
+        });
+        
+        // Run prediction
+        const predictions = await gdeDistillModel.predict(imageTensor);
+        
+        // Process predictions
+        const outputs = await processPredictions(predictions, 'gde-distill');
+        
+        // 測量結束時間
+        const endTime = performance.now();
+        const inferenceTime = Math.round(endTime - startTime);
+        
+        // Display time
+        gdeDistillTime.textContent = `${inferenceTime} ms`;
+        
+        // Draw the detections
+        drawDetections(outputs, imageInfo, gdeDistillCtx);
+        
+        // Clean up tensors
+        imageTensor.dispose();
+        predictions.dispose();
+    } catch (error) {
+        console.error('GDE Distill預測錯誤：', error);
+        gdeDistillTime.textContent = '錯誤';
+    } finally {
+        // Hide loading indicator
+        gdeDistillLoading.style.display = 'none';
     }
 }
 
